@@ -1,6 +1,6 @@
 
-build--so:
+compile:
 	python setup.py build_ext --inplace
 
-test-zipfile:
+t:
 	PYTHONPATH=. python test/test_zipfile.py
