@@ -1,7 +1,5 @@
-diff --git zipfile.py zipfile.py
-index b77e6c8..592cf00 100644
---- zipfile.py
-+++ zipfile.py
+--- Python-2.7.12/Lib/zipfile.py	2016-08-25 18:57:45.000000000 +0900
++++ cyzipfile.pyx	2016-08-25 18:59:49.000000000 +0900
 @@ -147,7 +147,7 @@ def is_zipfile(filename):
      result = False
      try:
@@ -11,3 +9,53 @@ index b77e6c8..592cf00 100644
          else:
              with open(filename, "rb") as fp:
                  result = _check_zipfile(fp)
+@@ -417,7 +417,7 @@ class ZipInfo (object):
+             extra = extra[ln+4:]
+ 
+ 
+-class _ZipDecrypter:
++cdef class _ZipDecrypter:
+     """Class to handle decryption of files stored within a ZIP archive.
+ 
+     ZIP supports a password-based form of encryption. Even though known
+@@ -430,15 +430,18 @@ class _ZipDecrypter:
+         plain_text = map(zd, cypher_text)
+     """
+ 
+-    def _GenerateCRCTable():
++    cdef unsigned long crctable[256]
++    cdef unsigned long key0, key1, key2
++
++    cdef void _GenerateCRCTable(self):
+         """Generate a CRC-32 table.
+ 
+         ZIP encryption uses the CRC32 one-byte primitive for scrambling some
+         internal keys. We noticed that a direct implementation is faster than
+         relying on binascii.crc32().
+         """
+-        poly = 0xedb88320
+-        table = [0] * 256
++        cdef unsigned long poly = 0xedb88320
++        cdef unsigned long crc, i, j
+         for i in range(256):
+             crc = i
+             for j in range(8):
+@@ -446,9 +449,7 @@ class _ZipDecrypter:
+                     crc = ((crc >> 1) & 0x7FFFFFFF) ^ poly
+                 else:
+                     crc = ((crc >> 1) & 0x7FFFFFFF)
+-            table[i] = crc
+-        return table
+-    crctable = _GenerateCRCTable()
++            self.crctable[i] = crc
+ 
+     def _crc32(self, ch, crc):
+         """Compute the CRC32 primitive on one byte."""
+@@ -458,6 +459,7 @@ class _ZipDecrypter:
+         self.key0 = 305419896
+         self.key1 = 591751049
+         self.key2 = 878082192
++        self._GenerateCRCTable()
+         for p in pwd:
+             self._UpdateKeys(p)
+ 
