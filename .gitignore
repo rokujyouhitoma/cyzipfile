@@ -1,0 +1,6 @@
+*.pyc
+
+build
+
+zipfile.c
+zipfile.so

@@ -1,0 +1,14 @@
+diff --git test/test_zipfile64.py test/test_zipfile64.py
+index 151baf2..99b1a2c 100644
+--- test/test_zipfile64.py
++++ test/test_zipfile64.py
+@@ -17,7 +17,8 @@ try:
+ except ImportError:
+     zlib = None
+ 
+-import zipfile, os, unittest
++import cyzipfile as zipfile
++import os, unittest
+ import time
+ import sys
+ 

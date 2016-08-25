@@ -1,0 +1,13 @@
+diff --git test/test_zipfile.py test/test_zipfile.py
+index 4000b30..7f6a0ce 100644
+--- test/test_zipfile.py
++++ test/test_zipfile.py
+@@ -9,7 +9,7 @@ import io
+ import sys
+ import time
+ import struct
+-import zipfile
++import cyzipfile as zipfile
+ import unittest
+ 
+ from StringIO import StringIO

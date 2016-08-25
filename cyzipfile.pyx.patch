@@ -1,0 +1,13 @@
+diff --git zipfile.py zipfile.py
+index b77e6c8..592cf00 100644
+--- zipfile.py
++++ zipfile.py
+@@ -147,7 +147,7 @@ def is_zipfile(filename):
+     result = False
+     try:
+         if hasattr(filename, "read"):
+-            result = _check_zipfile(fp=filename)
++            result = _check_zipfile(filename)
+         else:
+             with open(filename, "rb") as fp:
+                 result = _check_zipfile(fp)
