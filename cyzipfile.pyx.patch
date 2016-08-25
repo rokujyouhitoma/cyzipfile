@@ -1,5 +1,5 @@
 --- Python-2.7.12/Lib/zipfile.py	2016-08-25 18:57:45.000000000 +0900
-+++ cyzipfile.pyx	2016-08-25 18:59:49.000000000 +0900
++++ cyzipfile.pyx	2016-08-25 20:02:36.000000000 +0900
 @@ -147,7 +147,7 @@ def is_zipfile(filename):
      result = False
      try:
@@ -26,7 +26,7 @@
 +    cdef unsigned long crctable[256]
 +    cdef unsigned long key0, key1, key2
 +
-+    cdef void _GenerateCRCTable(self):
++    cdef inline void _GenerateCRCTable(self):
          """Generate a CRC-32 table.
  
          ZIP encryption uses the CRC32 one-byte primitive for scrambling some
@@ -40,7 +40,7 @@
          for i in range(256):
              crc = i
              for j in range(8):
-@@ -446,9 +449,7 @@ class _ZipDecrypter:
+@@ -446,26 +449,25 @@ class _ZipDecrypter:
                      crc = ((crc >> 1) & 0x7FFFFFFF) ^ poly
                  else:
                      crc = ((crc >> 1) & 0x7FFFFFFF)
@@ -49,13 +49,37 @@
 -    crctable = _GenerateCRCTable()
 +            self.crctable[i] = crc
  
-     def _crc32(self, ch, crc):
+-    def _crc32(self, ch, crc):
++    cdef inline unsigned long _crc32(self, unsigned long ch, unsigned long crc):
          """Compute the CRC32 primitive on one byte."""
-@@ -458,6 +459,7 @@ class _ZipDecrypter:
+-        return ((crc >> 8) & 0xffffff) ^ self.crctable[(crc ^ ord(ch)) & 0xff]
++        return ((crc >> 8) & 0xffffff) ^ self.crctable[(crc ^ ch) & 0xff]
+ 
+     def __init__(self, pwd):
          self.key0 = 305419896
          self.key1 = 591751049
          self.key2 = 878082192
 +        self._GenerateCRCTable()
          for p in pwd:
-             self._UpdateKeys(p)
+-            self._UpdateKeys(p)
++            self._UpdateKeys(ord(p))
+ 
+-    def _UpdateKeys(self, c):
++    cdef inline void _UpdateKeys(self, unsigned long c):
+         self.key0 = self._crc32(c, self.key0)
+         self.key1 = (self.key1 + (self.key0 & 255)) & 4294967295
+         self.key1 = (self.key1 * 134775813 + 1) & 4294967295
+-        self.key2 = self._crc32(chr((self.key1 >> 24) & 255), self.key2)
++        self.key2 = self._crc32((self.key1 >> 24) & 255, self.key2)
+ 
+     def __call__(self, c):
+         """Decrypt a single character."""
+@@ -473,7 +475,7 @@ class _ZipDecrypter:
+         k = self.key2 | 2
+         c = c ^ (((k * (k^1)) >> 8) & 255)
+         c = chr(c)
+-        self._UpdateKeys(c)
++        self._UpdateKeys(ord(c))
+         return c
+ 
  

@@ -433,7 +433,7 @@ cdef class _ZipDecrypter:
     cdef unsigned long crctable[256]
     cdef unsigned long key0, key1, key2
 
-    cdef void _GenerateCRCTable(self):
+    cdef inline void _GenerateCRCTable(self):
         """Generate a CRC-32 table.
 
         ZIP encryption uses the CRC32 one-byte primitive for scrambling some
@@ -451,9 +451,9 @@ cdef class _ZipDecrypter:
                     crc = ((crc >> 1) & 0x7FFFFFFF)
             self.crctable[i] = crc
 
-    def _crc32(self, ch, crc):
+    cdef inline unsigned long _crc32(self, unsigned long ch, unsigned long crc):
         """Compute the CRC32 primitive on one byte."""
-        return ((crc >> 8) & 0xffffff) ^ self.crctable[(crc ^ ord(ch)) & 0xff]
+        return ((crc >> 8) & 0xffffff) ^ self.crctable[(crc ^ ch) & 0xff]
 
     def __init__(self, pwd):
         self.key0 = 305419896
@@ -461,13 +461,13 @@ cdef class _ZipDecrypter:
         self.key2 = 878082192
         self._GenerateCRCTable()
         for p in pwd:
-            self._UpdateKeys(p)
+            self._UpdateKeys(ord(p))
 
-    def _UpdateKeys(self, c):
+    cdef inline void _UpdateKeys(self, unsigned long c):
         self.key0 = self._crc32(c, self.key0)
         self.key1 = (self.key1 + (self.key0 & 255)) & 4294967295
         self.key1 = (self.key1 * 134775813 + 1) & 4294967295
-        self.key2 = self._crc32(chr((self.key1 >> 24) & 255), self.key2)
+        self.key2 = self._crc32((self.key1 >> 24) & 255, self.key2)
 
     def __call__(self, c):
         """Decrypt a single character."""
@@ -475,7 +475,7 @@ cdef class _ZipDecrypter:
         k = self.key2 | 2
         c = c ^ (((k * (k^1)) >> 8) & 255)
         c = chr(c)
-        self._UpdateKeys(c)
+        self._UpdateKeys(ord(c))
         return c
 
 
